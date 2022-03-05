@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package abi;
+
+// request from client
+message CommandRequest {
+    oneof request_data {
+        Hget hget = 1;
+        Hgetall hgetall = 2;
+        Hmget hmget = 3;
+        Hset hset = 4;
+        Hmset hmset = 5;
+        Hdel hdel = 6;
+        Hmdel hmdel = 7;
+        Hexist hexist = 8;
+        Hmexists hmexists = 9;
+    }
+}
+
+// response by server
+message CommandResponse {
+    // status codes,reuse http status codes,e.g. 2xx / 3xx / 4xx
+    uint32 status = 1;
+    // if the status code is not 2xx message will give a specific err message
+    string message = 2;
+    repeated Value values = 3;
+    repeated Kvpair pairs = 4;
+}
+
+// get the value of the key in the table
+message Hget {
+    string table = 1;
+    string key   = 2;
+}
+
+// get all kv pairs of in the table
+message Hgetall {
+    string table = 1;
+}
+
+message Hmget {
+    string table = 1;
+    repeated string keys = 2;
+}
+
+message Value {
+    oneof value {
+        string string  = 1;
+        bytes  binary  = 2;
+        int64  integer = 3;
+        double float   = 4;
+        bool   bool    = 5;
+    }
+}
+
+message Kvpair {
+    string key   = 1;
+    Value  value = 2;
+}
+
+message Hset {
+    string table = 1;
+    Kvpair pair  = 2; 
+}
+
+message Hmset {
+    string table          = 1;
+    repeated Kvpair pairs  = 2; 
+}
+
+message Hdel {
+    string table = 1;
+    string key   = 2;
+}
+
+message Hmdel {
+    string table         = 1;
+    repeated string keys = 2;
+}
+
+message Hexist {
+    string table = 1;
+    string key   = 2;
+}
+
+message Hmexists {
+    string table = 1;
+    repeated string keys = 2;
+}
