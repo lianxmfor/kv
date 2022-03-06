@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+dashmap = "5.1.0" # a concurrent associative array/hashmap in Rust
 prost = "0.8" # process codes of generate by protobuf
 thiserror = "1.0" # provides a convenient derive macro for the standard library's std::error::Error trait
 
