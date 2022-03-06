@@ -14,7 +14,7 @@ impl Kvpair {
 impl From<&str> for Value {
     fn from(s: &str) -> Self {
         Self {
-            value: Some(value::Value::String(s.to_string()))
+            value: Some(value::Value::String(s.to_string())),
         }
     }
 }
