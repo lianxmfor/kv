@@ -72,7 +72,7 @@ mod tests {
     }
 
     #[test]
-    fn memtable_get_all() {
+    fn memtable_get_all_should_work() {
         let store = MemTable::new();
         test_get_all(store)
     }
