@@ -17,7 +17,7 @@ impl CommandService for Hget {
     fn execute(self, store: &impl Storage) -> CommandResponse {
         match store.get(&self.table, &self.key) {
             Ok(Some(v)) => v.into(),
-            Ok(None) => Value::default().into(),
+            Ok(None) => KvError::NotFound(self.table, self.key).into(),
             Err(e) => e.into(),
         }
     }
@@ -35,7 +35,6 @@ impl CommandService for Hdel {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
     use crate::{command_request::RequestData, memory::MemTable};
 
@@ -53,15 +52,18 @@ mod tests {
     #[test]
     fn hget_should_work() {
         let store = MemTable::new();
-        let cmd = CommandRequest::new_hget("t1", "k1");
-        let res = dispatch(cmd, &store);
-        assert_res_ok(res, &[Default::default()], &[]);
-
         dispatch(CommandRequest::new_hset("t1", "k1", "v1".into()), &store);
 
+        let res = dispatch(CommandRequest::new_hget("t1", "k1"), &store);
+        assert_res_ok(res, &["v1".into()], &[]);
+    }
+
+    #[test]
+    fn hget_with_non_exist_key_should_return_404() {
+        let store = MemTable::new();
         let cmd = CommandRequest::new_hget("t1", "k1");
         let res = dispatch(cmd, &store);
-        assert_res_ok(res, &["v1".into()], &[]);
+        assert_res_error(res, 404, "Not found");
     }
 
     #[test]
@@ -94,5 +96,12 @@ mod tests {
         assert_eq!(res.message, "");
         assert_eq!(res.values, values);
         assert_eq!(res.pairs, pairs)
+    }
+
+    fn assert_res_error(res: CommandResponse, code: u32, msg: &str) {
+        assert_eq!(res.status, code);
+        assert!(res.message.contains(msg));
+        assert_eq!(res.values, &[]);
+        assert_eq!(res.pairs, &[]);
     }
 }
