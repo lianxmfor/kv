@@ -23,6 +23,16 @@ impl CommandService for Hget {
     }
 }
 
+impl CommandService for Hdel {
+    fn execute(self, store: &impl Storage) -> CommandResponse {
+        match store.del(&self.table, &self.key) {
+            Ok(Some(v)) => v.into(),
+            Ok(None) => Value::default().into(),
+            Err(e) => e.into(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -54,10 +64,26 @@ mod tests {
         assert_res_ok(res, &["v1".into()], &[]);
     }
 
+    #[test]
+    fn hdel_should_workd() {
+        let store = MemTable::new();
+        let cmd = CommandRequest::new_hdel("t1", "k1");
+        let res = dispatch(cmd, &store);
+        assert_res_ok(res, &[Default::default()], &[]);
+
+        let cmd = CommandRequest::new_hset("t1", "k1", "v1".into());
+        dispatch(cmd, &store);
+
+        let cmd = CommandRequest::new_hdel("t1", "k1");
+        let res = dispatch(cmd, &store);
+        assert_res_ok(res, &["v1".into()], &[]);
+    }
+
     fn dispatch(cmd: CommandRequest, store: &impl Storage) -> CommandResponse {
         match cmd.request_data.unwrap() {
             RequestData::Hset(cmd) => cmd.execute(store),
             RequestData::Hget(cmd) => cmd.execute(store),
+            RequestData::Hdel(cmd) => cmd.execute(store),
             _ => todo!(),
         }
     }

@@ -22,6 +22,15 @@ impl CommandRequest {
             })),
         }
     }
+
+    pub fn new_hdel(table: impl Into<String>, key: impl Into<String>) -> CommandRequest {
+        CommandRequest {
+            request_data: Some(RequestData::Hdel(Hdel {
+                table: table.into(),
+                key: key.into(),
+            })),
+        }
+    }
 }
 
 impl Kvpair {
