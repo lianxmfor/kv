@@ -23,6 +23,15 @@ impl CommandService for Hget {
     }
 }
 
+impl CommandService for Hgetall {
+    fn execute(self, store: &impl Storage) -> CommandResponse {
+        match store.get_all(&self.table) {
+            Ok(v) => v.into(),
+            Err(e) => e.into(),
+        }
+    }
+}
+
 impl CommandService for Hdel {
     fn execute(self, store: &impl Storage) -> CommandResponse {
         match store.del(&self.table, &self.key) {
@@ -67,6 +76,31 @@ mod tests {
     }
 
     #[test]
+    fn hget_all_should_work() {
+        let store = MemTable::new();
+        let cmds = vec![
+            CommandRequest::new_hset("t1", "k1", "v1".into()),
+            CommandRequest::new_hset("t1", "k2", "v2".into()),
+            CommandRequest::new_hset("t1", "k3", "v3".into()),
+            CommandRequest::new_hset("t1", "k1", "v11".into()),
+        ];
+
+        for cmd in cmds {
+            dispatch(cmd, &store);
+        }
+
+        let cmd = CommandRequest::new_hgetall("t1");
+        let res = dispatch(cmd, &store);
+        let pairs = &[
+            Kvpair::new("k1", "v11".into()),
+            Kvpair::new("k2", "v2".into()),
+            Kvpair::new("k3", "v3".into()),
+        ];
+
+        assert_res_ok(res, &[], pairs);
+    }
+
+    #[test]
     fn hdel_should_workd() {
         let store = MemTable::new();
         let cmd = CommandRequest::new_hdel("t1", "k1");
@@ -86,6 +120,7 @@ mod tests {
             RequestData::Hset(cmd) => cmd.execute(store),
             RequestData::Hget(cmd) => cmd.execute(store),
             RequestData::Hdel(cmd) => cmd.execute(store),
+            RequestData::Hgetall(cmd) => cmd.execute(store),
             _ => todo!(),
         }
     }

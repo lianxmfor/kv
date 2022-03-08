@@ -23,6 +23,14 @@ impl CommandRequest {
         }
     }
 
+    pub fn new_hgetall(table: impl Into<String>) -> CommandRequest {
+        CommandRequest {
+            request_data: Some(RequestData::Hgetall(Hgetall {
+                table: table.into(),
+            })),
+        }
+    }
+
     pub fn new_hdel(table: impl Into<String>, key: impl Into<String>) -> CommandRequest {
         CommandRequest {
             request_data: Some(RequestData::Hdel(Hdel {
@@ -55,6 +63,16 @@ impl From<Value> for CommandResponse {
         Self {
             status: StatusCode::OK.as_u16() as _,
             values: vec![v],
+            ..Default::default()
+        }
+    }
+}
+
+impl From<Vec<Kvpair>> for CommandResponse {
+    fn from(v: Vec<Kvpair>) -> CommandResponse {
+        CommandResponse {
+            status: StatusCode::OK.as_u16() as _,
+            pairs: v,
             ..Default::default()
         }
     }
