@@ -13,6 +13,15 @@ impl CommandRequest {
             })),
         }
     }
+
+    pub fn new_hget(table: impl Into<String>, key: impl Into<String>) -> CommandRequest {
+        CommandRequest {
+            request_data: Some(RequestData::Hget(Hget {
+                table: table.into(),
+                key: key.into(),
+            })),
+        }
+    }
 }
 
 impl Kvpair {
