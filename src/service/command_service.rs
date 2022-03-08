@@ -13,6 +13,16 @@ impl CommandService for Hset {
     }
 }
 
+impl CommandService for Hget {
+    fn execute(self, store: &impl Storage) -> CommandResponse {
+        match store.get(&self.table, &self.key) {
+            Ok(Some(v)) => v.into(),
+            Ok(None) => Value::default().into(),
+            Err(e) => e.into(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -30,9 +40,24 @@ mod tests {
         assert_res_ok(res, &["world".into()], &[]);
     }
 
+    #[test]
+    fn hget_should_work() {
+        let store = MemTable::new();
+        let cmd = CommandRequest::new_hget("t1", "k1");
+        let res = dispatch(cmd, &store);
+        assert_res_ok(res, &[Default::default()], &[]);
+
+        dispatch(CommandRequest::new_hset("t1", "k1", "v1".into()), &store);
+
+        let cmd = CommandRequest::new_hget("t1", "k1");
+        let res = dispatch(cmd, &store);
+        assert_res_ok(res, &["v1".into()], &[]);
+    }
+
     fn dispatch(cmd: CommandRequest, store: &impl Storage) -> CommandResponse {
         match cmd.request_data.unwrap() {
             RequestData::Hset(cmd) => cmd.execute(store),
+            RequestData::Hget(cmd) => cmd.execute(store),
             _ => todo!(),
         }
     }
