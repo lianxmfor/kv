@@ -1,3 +1,5 @@
+mod command_service;
+
 use crate::{CommandResponse, Storage};
 
 pub trait CommandService {
