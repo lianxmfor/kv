@@ -32,6 +32,19 @@ impl CommandService for Hgetall {
     }
 }
 
+impl CommandService for Hmget {
+    fn execute(self, store: &impl Storage) -> CommandResponse {
+        let mut pairs: Vec<Kvpair> = Vec::new();
+        for key in self.keys {
+            match store.get(&self.table, &key) {
+                Ok(Some(v)) => pairs.push(Kvpair::new(key, v)),
+                _ => pairs.push(Kvpair::new(key, Value::default())),
+            }
+        }
+        pairs.into()
+    }
+}
+
 impl CommandService for Hdel {
     fn execute(self, store: &impl Storage) -> CommandResponse {
         match store.del(&self.table, &self.key) {
@@ -75,6 +88,33 @@ mod tests {
         let cmd = CommandRequest::new_hget("t1", "k1");
         let res = dispatch(cmd, &store);
         assert_res_error(res, 404, "Not found");
+    }
+
+    #[test]
+    fn hmget_should_work() {
+        let store = MemTable::new();
+        let cmds = vec![
+            CommandRequest::new_hset("t1", "k1", "v1".into()),
+            CommandRequest::new_hset("t1", "k2", "v2".into()),
+            CommandRequest::new_hset("t1", "k3", "v3".into()),
+            CommandRequest::new_hset("t1", "k1", "v11".into()),
+        ];
+
+        for cmd in cmds {
+            dispatch(cmd, &store);
+        }
+
+        let cmd = CommandRequest::new_hmget("t1", vec!["k1".into(), "k2".into()]);
+
+        let res = dispatch(cmd, &store);
+        assert_res_ok(
+            res,
+            &[],
+            &[
+                Kvpair::new("k1", "v11".into()),
+                Kvpair::new("k2", "v2".into()),
+            ],
+        )
     }
 
     #[test]
@@ -123,6 +163,7 @@ mod tests {
             RequestData::Hget(cmd) => cmd.execute(store),
             RequestData::Hdel(cmd) => cmd.execute(store),
             RequestData::Hgetall(cmd) => cmd.execute(store),
+            RequestData::Hmget(cmd) => cmd.execute(store),
             _ => todo!(),
         }
     }
