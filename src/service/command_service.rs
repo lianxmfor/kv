@@ -83,6 +83,29 @@ impl CommandService for Hmdel {
     }
 }
 
+impl CommandService for Hexist {
+    fn execute(self, store: &impl Storage) -> CommandResponse {
+        match store.contains(&self.table, &self.key) {
+            Ok(v) => Kvpair::new(self.key, v.into()).into(),
+            Err(e) => e.into(),
+        }
+    }
+}
+
+impl CommandService for Hmexists {
+    fn execute(self, store: &impl Storage) -> CommandResponse {
+        let mut pairs: Vec<Kvpair> = Vec::new();
+        for key in self.keys {
+            match store.contains(&self.table, &key) {
+                Ok(v) => pairs.push(Kvpair::new(key, v.into())),
+                Err(e) => return e.into(),
+            }
+        }
+
+        pairs.into()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -241,6 +264,42 @@ mod tests {
         )
     }
 
+    #[test]
+    fn hexist_should_work() {
+        let store = MemTable::new();
+        let res = dispatch(CommandRequest::new_hexist("t1", "k1"), &store);
+        assert_res_ok(res, &[], &[Kvpair::new("k1", false.into())]);
+
+        dispatch(CommandRequest::new_hset("t1", "k1", 1.into()), &store);
+        let res = dispatch(CommandRequest::new_hexist("t1", "k1"), &store);
+        assert_res_ok(res, &[], &[Kvpair::new("k1", true.into())]);
+    }
+
+    #[test]
+    fn hmexist_should_work() {
+        let store = MemTable::new();
+        let cmds = vec![
+            CommandRequest::new_hset("t1", "k1", "v1".into()),
+            CommandRequest::new_hset("t1", "k3", 3.into()),
+        ];
+        for cmd in cmds {
+            dispatch(cmd, &store);
+        }
+
+        let cmd = CommandRequest::new_hmexist("t1", vec!["k1".into(), "k2".into(), "k3".into()]);
+        let res = dispatch(cmd, &store);
+
+        assert_res_ok(
+            res,
+            &[],
+            &[
+                Kvpair::new("k1", true.into()),
+                Kvpair::new("k2", false.into()),
+                Kvpair::new("k3", true.into()),
+            ],
+        )
+    }
+
     fn dispatch(cmd: CommandRequest, store: &impl Storage) -> CommandResponse {
         match cmd.request_data.unwrap() {
             RequestData::Hset(cmd) => cmd.execute(store),
@@ -250,7 +309,8 @@ mod tests {
             RequestData::Hmget(cmd) => cmd.execute(store),
             RequestData::Hmset(cmd) => cmd.execute(store),
             RequestData::Hmdel(cmd) => cmd.execute(store),
-            _ => todo!(),
+            RequestData::Hexist(cmd) => cmd.execute(store),
+            RequestData::Hmexists(cmd) => cmd.execute(store),
         }
     }
 }
