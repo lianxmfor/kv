@@ -31,6 +31,15 @@ impl CommandRequest {
         }
     }
 
+    pub fn new_hmget(table: impl Into<String>, keys: Vec<String>) -> CommandRequest {
+        CommandRequest {
+            request_data: Some(RequestData::Hmget(Hmget {
+                table: table.into(),
+                keys,
+            })),
+        }
+    }
+
     pub fn new_hdel(table: impl Into<String>, key: impl Into<String>) -> CommandRequest {
         CommandRequest {
             request_data: Some(RequestData::Hdel(Hdel {
