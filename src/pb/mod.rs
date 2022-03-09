@@ -14,6 +14,15 @@ impl CommandRequest {
         }
     }
 
+    pub fn new_hmset(table: impl Into<String>, pairs: Vec<Kvpair>) -> CommandRequest {
+        CommandRequest {
+            request_data: Some(RequestData::Hmset(Hmset {
+                table: table.into(),
+                pairs,
+            })),
+        }
+    }
+
     pub fn new_hget(table: impl Into<String>, key: impl Into<String>) -> CommandRequest {
         CommandRequest {
             request_data: Some(RequestData::Hget(Hget {
@@ -48,6 +57,15 @@ impl CommandRequest {
             })),
         }
     }
+
+    pub fn new_hmdel(table: impl Into<String>, keys: Vec<String>) -> CommandRequest {
+        CommandRequest {
+            request_data: Some(RequestData::Hmdel(Hmdel {
+                table: table.into(),
+                keys,
+            })),
+        }
+    }
 }
 
 impl Kvpair {
@@ -63,6 +81,30 @@ impl From<&str> for Value {
     fn from(s: &str) -> Self {
         Self {
             value: Some(value::Value::String(s.to_string())),
+        }
+    }
+}
+
+impl From<i64> for Value {
+    fn from(i: i64) -> Self {
+        Self {
+            value: Some(value::Value::Integer(i)),
+        }
+    }
+}
+
+impl From<f64> for Value {
+    fn from(f: f64) -> Self {
+        Self {
+            value: Some(value::Value::Float(f)),
+        }
+    }
+}
+
+impl From<bool> for Value {
+    fn from(b: bool) -> Self {
+        Self {
+            value: Some(value::Value::Bool(b)),
         }
     }
 }
