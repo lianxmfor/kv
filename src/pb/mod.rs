@@ -66,6 +66,24 @@ impl CommandRequest {
             })),
         }
     }
+
+    pub fn new_hexist(table: impl Into<String>, key: impl Into<String>) -> CommandRequest {
+        CommandRequest {
+            request_data: Some(RequestData::Hexist(Hexist {
+                table: table.into(),
+                key: key.into(),
+            })),
+        }
+    }
+
+    pub fn new_hmexist(table: impl Into<String>, keys: Vec<String>) -> CommandRequest {
+        CommandRequest {
+            request_data: Some(RequestData::Hmexists(Hmexists {
+                table: table.into(),
+                keys,
+            })),
+        }
+    }
 }
 
 impl Kvpair {
@@ -124,6 +142,16 @@ impl From<Vec<Kvpair>> for CommandResponse {
         CommandResponse {
             status: StatusCode::OK.as_u16() as _,
             pairs: v,
+            ..Default::default()
+        }
+    }
+}
+
+impl From<Kvpair> for CommandResponse {
+    fn from(pair: Kvpair) -> Self {
+        Self {
+            status: StatusCode::OK.as_u16() as _,
+            pairs: vec![pair],
             ..Default::default()
         }
     }
