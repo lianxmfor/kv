@@ -1,5 +1,6 @@
-use crate::{Kvpair, Storage, Value};
 use dashmap::{mapref::one::Ref, DashMap};
+
+use crate::{KvError, Kvpair, Storage, Value};
 
 #[derive(Clone, Debug, Default)]
 pub struct MemTable {
@@ -23,27 +24,27 @@ impl MemTable {
 }
 
 impl Storage for MemTable {
-    fn get(&self, table: &str, key: &str) -> Result<Option<Value>, crate::KvError> {
+    fn get(&self, table: &str, key: &str) -> Result<Option<Value>, KvError> {
         let table = self.get_or_create_table(table);
         Ok(table.get(key).map(|v| v.value().clone()))
     }
 
-    fn set(&self, table: &str, key: &str, value: Value) -> Result<Option<Value>, crate::KvError> {
+    fn set(&self, table: &str, key: &str, value: Value) -> Result<Option<Value>, KvError> {
         let table = self.get_or_create_table(table);
         Ok(table.insert(key.to_string(), value))
     }
 
-    fn contains(&self, table: &str, key: &str) -> Result<bool, crate::KvError> {
+    fn contains(&self, table: &str, key: &str) -> Result<bool, KvError> {
         let table = self.get_or_create_table(table);
         Ok(table.contains_key(key))
     }
 
-    fn del(&self, table: &str, key: &str) -> Result<Option<Value>, crate::KvError> {
+    fn del(&self, table: &str, key: &str) -> Result<Option<Value>, KvError> {
         let table = self.get_or_create_table(table);
         Ok(table.remove(key).map(|(_k, v)| v))
     }
 
-    fn get_all(&self, table: &str) -> Result<Vec<crate::Kvpair>, crate::KvError> {
+    fn get_all(&self, table: &str) -> Result<Vec<Kvpair>, KvError> {
         let table = self.get_or_create_table(table);
         Ok(table
             .iter()
@@ -51,10 +52,7 @@ impl Storage for MemTable {
             .collect())
     }
 
-    fn get_iter(
-        &self,
-        table: &str,
-    ) -> Result<Box<dyn Iterator<Item = crate::Kvpair>>, crate::KvError> {
+    fn get_iter(&self, table: &str) -> Result<Box<dyn Iterator<Item = Kvpair>>, KvError> {
         let table = self.get_or_create_table(table).clone();
         let iter = table.into_iter().map(|data| data.into());
         Ok(Box::new(iter))
