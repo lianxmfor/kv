@@ -4,13 +4,13 @@ use futures::prelude::*;
 use tokio::net::TcpListener;
 use tracing::info;
 
-use kv::{memory::MemTable, CommandRequest, CommandResponse, Service};
+use kv::{memory::MemTable, CommandRequest, CommandResponse, Service, ServiceInner};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
 
-    let service: Service = Service::new(MemTable::new());
+    let service: Service = ServiceInner::new(MemTable::default()).into();
     let addr = "127.0.0.1:9527";
     let listener = TcpListener::bind(addr).await?;
     info!("Start listening on {}", addr);
