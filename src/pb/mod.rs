@@ -3,6 +3,7 @@ pub mod abi;
 use crate::KvError;
 use abi::{command_request::RequestData, *};
 use http::StatusCode;
+use prost::Message;
 
 impl CommandRequest {
     pub fn new_hset(table: impl Into<String>, key: impl Into<String>, value: Value) -> Self {
@@ -124,6 +125,25 @@ impl From<bool> for Value {
         Self {
             value: Some(value::Value::Bool(b)),
         }
+    }
+}
+
+impl TryFrom<&[u8]> for Value {
+    type Error = KvError;
+
+    fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
+        let msg = Value::decode(data)?;
+        Ok(msg)
+    }
+}
+
+impl TryFrom<Value> for Vec<u8> {
+    type Error = KvError;
+
+    fn try_from(v: Value) -> Result<Self, Self::Error> {
+        let mut buf = Vec::with_capacity(v.encoded_len());
+        v.encode(&mut buf)?;
+        Ok(buf)
     }
 }
 
