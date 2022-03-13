@@ -7,6 +7,7 @@ edition = "2021"
 dashmap = "5.1.0" # a concurrent associative array/hashmap in Rust
 http = "0.2" # use http status code
 prost = "0.9" # process codes of generate by protobuf
+sled = "0.34" # a high-performance embedded database
 thiserror = "1" # provides a convenient derive macro for the standard library's std::error::Error trait
 tracing = "0.1" # print some message
 
@@ -14,6 +15,7 @@ tracing = "0.1" # print some message
 anyhow = "1"
 async-prost = "0.3"
 futures = "0.3"
+tempfile = "3"
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "io-util", "macros", "net"] }
 tracing-subscriber = "0.3"
 
